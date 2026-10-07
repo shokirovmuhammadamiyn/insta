@@ -1,0 +1,598 @@
+```html
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaGen - 5 Harfli Instagram Username Generator & Tekshiruvchi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            purple: '#833ab4',
+                            pink: '#fd1d1d',
+                            orange: '#fcb045',
+                            dark: '#0b0f19',
+                            card: '#161e2e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Maxsus animatsiyalar va scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a5568;
+        }
+        .ig-gradient-text {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .ig-gradient-bg {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+    </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans antialiased selection:bg-rose-500 selection:text-white flex flex-col">
+
+    <header class="border-b border-slate-800/80 bg-[#0e1424]/90 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl ig-gradient-bg flex items-center justify-center shadow-lg shadow-pink-500/20">
+                    <i class="fa-brands fa-instagram text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Insta<span class="ig-gradient-text">Genius</span></h1>
+                    <p class="text-xs text-slate-400">5 Harfli & Premium Nik Generator</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="toggleFavoritesBtn" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium transition border border-slate-700">
+                    <i class="fa-solid fa-bookmark text-amber-400"></i>
+                    <span>Saqlanganlar</span>
+                    <span id="favCountBadge" class="bg-amber-400/20 text-amber-300 text-xs px-1.5 py-0.5 rounded-full font-bold">0</span>
+                </button>
+                <a href="https://github.com" target="_blank" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700" title="GitHub">
+                    <i class="fa-brands fa-github text-lg"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Chap panel: Sozlamalar va Filterlar -->
+        <aside class="lg:col-span-4 space-y-6">
+            <div class="bg-[#141b2d] rounded-2xl p-6 border border-slate-800 shadow-xl space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <h2 class="text-lg font-bold flex items-center gap-2 text-white">
+                        <i class="fa-solid fa-sliders text-rose-500"></i> Generator Sozlamalari
+                    </h2>
+                    <span class="text-xs bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded-full font-medium">Auto Pattern</span>
+                </div>
+
+                <!-- Harflar soni (Uzunligi) -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-slate-300">Belgilar soni (Uzunlik):</label>
+                        <span id="lenDisplay" class="text-sm font-bold text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded">5 ta belgi</span>
+                    </div>
+                    <input type="range" id="charLength" min="3" max="8" value="5" class="w-full accent-rose-500 cursor-pointer h-2 bg-slate-700 rounded-lg">
+                    <div class="flex justify-between text-[11px] text-slate-500 mt-1">
+                        <span>3 (Kam uchraydi)</span>
+                        <span class="font-bold text-slate-300">5 (Tavsiya)</span>
+                        <span>8</span>
+                    </div>
+                </div>
+
+                <!-- Uslub / Generatsiya turi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Nik Uslubi (Sifati):</label>
+                    <select id="genStyle" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-rose-500">
+                        <option value="pronounceable">Talaffuzli & Ma'noli (zaron, velox, kairo)</option>
+                        <option value="aesthetic">Estetik / Minimalist (vxlen, luxio, aevum)</option>
+                        <option value="tech">Texnologik & Cyber (nexis, kybro, xylon)</option>
+                        <option value="luxury">Premium & Hashamatli (aurel, royce, elita)</option>
+                        <option value="random">Toza Tasodifiy (Harf kombinatsiyasi)</option>
+                        <option value="prefix_suffix">Maxsus prefiks/suffiks bilan</option>
+                    </select>
+                </div>
+
+                <!-- Qo'shimcha qoidalar va belgilar -->
+                <div class="space-y-3 pt-2">
+                    <label class="block text-sm font-medium text-slate-300">Ruxsat etilgan belgilar:</label>
+                    
+                    <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-300">
+                        <input type="checkbox" id="lettersOnly" class="w-4 h-4 accent-rose-500 rounded bg-slate-900 border-slate-700">
+                        <span>Faqat toza harflar (a-z)</span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-300">
+                        <input type="checkbox" id="allowDots" checked class="w-4 h-4 accent-rose-500 rounded bg-slate-900 border-slate-700">
+                        <span>Nuqta qo'shish ( . ) <span class="text-xs text-emerald-400 font-semibold">[Bo'sh bo'lishi osonroq]</span></span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-300">
+                        <input type="checkbox" id="allowUnderscore" checked class="w-4 h-4 accent-rose-500 rounded bg-slate-900 border-slate-700">
+                        <span>Pastki chiziqcha ( _ ) <span class="text-xs text-emerald-400 font-semibold">[Eng ommabop]</span></span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer text-sm text-slate-300">
+                        <input type="checkbox" id="allowNumbers" class="w-4 h-4 accent-rose-500 rounded bg-slate-900 border-slate-700">
+                        <span>Raqamlar qo'shish (0-9)</span>
+                    </label>
+                </div>
+
+                <!-- Maxsus harf yoki kalit so'z -->
+                <div id="customKeywordBox" class="space-y-1.5 pt-2">
+                    <label class="block text-sm font-medium text-slate-300">Boshlanish harfi yoki o'zak (Ixtiyoriy):</label>
+                    <input type="text" id="customSeed" placeholder="Masalan: z, v, al, lux..." maxlength="4" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500">
+                    <p class="text-[11px] text-slate-500">Agar ma'lum harf bilan boshlanishini xohlasangiz kiriting.</p>
+                </div>
+
+                <!-- Miqdori -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Bitta urishda generatsiya soni:</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" class="batch-count-btn py-1.5 rounded-lg border border-slate-700 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition" data-count="12">12 ta</button>
+                        <button type="button" class="batch-count-btn py-1.5 rounded-lg border border-rose-500/50 text-xs font-semibold bg-rose-500/20 text-rose-300 transition" data-count="24">24 ta</button>
+                        <button type="button" class="batch-count-btn py-1.5 rounded-lg border border-slate-700 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition" data-count="48">48 ta</button>
+                        <button type="button" class="batch-count-btn py-1.5 rounded-lg border border-slate-700 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition" data-count="100">100 ta</button>
+                    </div>
+                </div>
+
+                <!-- Generatsiya qilish tugmasi -->
+                <button id="generateBtn" class="w-full py-3.5 px-4 rounded-xl ig-gradient-bg text-white font-bold text-sm tracking-wide shadow-lg shadow-pink-500/25 hover:opacity-95 active:scale-[0.98] transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Yangi Niklarni Generatsiya Qilish</span>
+                </button>
+            </div>
+
+            <!-- Tezkor yordam / Maslahatlar -->
+            <div class="bg-slate-900/60 rounded-2xl p-4 border border-slate-800/80 text-xs text-slate-400 space-y-2">
+                <div class="font-semibold text-slate-200 flex items-center gap-1.5">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i> Foydali Maslahat:
+                </div>
+                <p>Instagram qisqa (4-5 harfli) bo'sh niklarni qidiruvdan va botlardan himoya qiladi. Nik yonidagi <span class="text-rose-400 font-medium">"Tekshirish"</span> tugmasini bosing: agar sahifa <span class="text-slate-200 font-medium">"Sorry, this page isn't available"</span> bersa, demak u bo'sh bo'lish ehtimoli 90% yuqori!</p>
+            </div>
+        </aside>
+
+        <section class="lg:col-span-8 flex flex-col space-y-4">
+            
+            <!-- Yuqori nazorat va Statistika paneli -->
+            <div class="bg-[#141b2d] rounded-2xl p-4 border border-slate-800 shadow flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-medium text-slate-400">Topilgan niklar:</span>
+                    <span id="resultsCount" class="text-sm font-bold text-white bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-700">0 ta</span>
+                    <span class="text-xs text-emerald-400 font-medium hidden sm:inline"><i class="fa-solid fa-sparkles mr-1"></i> Bo'sh bo'lish ehtimoli yuqori kombinatsiyalar</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="copyAllBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i> Hammasidan nusxa olish
+                    </button>
+                    <button id="exportTxtBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i> .TXT yuklash
+                    </button>
+                </div>
+            </div>
+
+            <!-- Niklar ro'yxati (Grid ko'rinishida) -->
+            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                <!-- Javascript orqali to'ldiriladi -->
+            </div>
+
+            <!-- Boshlang'ich holatdagi bo'sh ko'rsatkich -->
+            <div id="emptyState" class="py-20 text-center flex flex-col items-center justify-center space-y-4">
+                <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-500 text-2xl">
+                    <i class="fa-solid fa-at"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-base font-semibold text-slate-300">Hozircha niklar generatsiya qilinmadi</h3>
+                    <p class="text-xs text-slate-500">Chap tomondagi sozlamalarni tanlang va "Generatsiya Qilish" tugmasini bosing.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="favoritesModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex justify-end transition-opacity">
+        <div class="w-full max-w-md bg-[#141b2d] h-full shadow-2xl p-6 border-l border-slate-800 flex flex-col">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bookmark text-amber-400"></i>
+                    <h3 class="font-bold text-white text-lg">Saqlangan Niklar</h3>
+                </div>
+                <button id="closeFavoritesBtn" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="favoritesList" class="flex-1 overflow-y-auto py-4 space-y-2.5">
+                <!-- Javascript orqali saqlanganlar keladi -->
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 flex gap-2">
+                <button id="clearFavoritesBtn" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition border border-slate-700">
+                    Tozalash
+                </button>
+                <button id="exportFavsBtn" class="w-1/2 py-2.5 rounded-xl ig-gradient-bg text-white text-xs font-semibold transition">
+                    Ro'yxatni Yuklash
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 text-white border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage">Nusxa olindi!</span>
+    </div>
+
+    <script>
+        // Foydalanuvchi sozlamalari va ma'lumotlar ombori
+        let currentBatchCount = 24;
+        let generatedUsernames = [];
+        let favorites = JSON.parse(localStorage.getItem('instagen_favs') || '[]');
+
+        // Kam uchraydigan, bo'sh qolish ehtimoli 90%+ bo'lgan harflar va tovushlar
+        const rareConsonants = ['x', 'z', 'q', 'v', 'w', 'j', 'k', 'y'];
+        const standardConsonants = ['b', 'c', 'd', 'f', 'g', 'h', 'l', 'm', 'n', 'p', 'r', 's', 't'];
+        const vowels = ['a', 'e', 'i', 'o', 'u'];
+
+        // Bo'sh bo'lish ehtimoli yuqori zamonaviy qoliplar
+        const rarePatterns = [
+            'vx', 'zx', 'qx', 'zv', 'kx', 'zy', 'wy', 'vv', 'zz', 'xx', 'lyx', 'qvr', 'xov', 'zyp', 'vyn', 'jox'
+        ];
+        function generateSingleUsername(targetLength, style, seed = '') {
+            let name = seed.toLowerCase().trim();
+            const allowDot = allowDotsCheck.checked;
+            const allowUnder = allowUnderscoreCheck.checked;
+            const allowNum = allowNumbersCheck.checked;
+
+            // 5 harfli bo'sh bo'lish ehtimoli yuqori bo'lgan maxsus uslublar
+            if (style === 'aesthetic' || style === 'luxury') {
+                const rareRoots = ['vx', 'qvo', 'zyl', 'aex', 'vyz', 'kxo', 'xyn', 'pyr', 'zwa', 'nox', 'vqx', 'jux'];
+                name = name || getRandomItem(rareRoots);
+                while (name.length < targetLength) {
+                    name += getRandomItem(rareConsonants.concat(vowels));
+                }
+            } else if (style === 'pronounceable') {
+                // Kam uchraydigan harflar ishtirokidagi talaffuzli nomlar
+                let useRare = true;
+                while (name.length < targetLength) {
+                    if (useRare) {
+                        name += getRandomItem(rareConsonants);
+                    } else {
+                        name += getRandomItem(vowels);
+                    }
+                    useRare = !useRare;
+                }
+            } else if (style === 'prefix_suffix' || (!lettersOnlyCheck.checked && (allowDot || allowUnder))) {
+                // Nuqta va pastki chiziqcha bilan (bular Instagramda bo'sh bo'lishi eng oson variantlar)
+                const coreLetters = getRandomItem(rarePatterns);
+                let core = coreLetters;
+                while (core.length < targetLength - 1) {
+                    core += getRandomItem(rareConsonants.concat(vowels));
+                }
+                core = core.slice(0, targetLength - 1);
+                
+                const symbol = allowDot && allowUnder 
+                    ? (Math.random() > 0.5 ? '.' : '_') 
+                    : (allowDot ? '.' : '_');
+
+                // Instagram qoidasi: boshida yoki o'rtasida bo'lishi mumkin
+                const pos = Math.random() > 0.4 ? 1 + Math.floor(Math.random() * (core.length - 1)) : (symbol === '_' ? 0 : 1);
+                name = core.slice(0, pos) + symbol + core.slice(pos);
+            } else {
+                // Toza noyob harflar kombinatsiyasi
+                const pool = rareConsonants.concat(standardConsonants, vowels);
+                while (name.length < targetLength) {
+                    name += getRandomItem(pool);
+                }
+            }
+
+            // Uzunlikni to'g'irlash
+            name = name.substring(0, targetLength);
+
+            // Raqam ruxsat etilgan bo'lsa
+            if (allowNum && Math.random() > 0.6) {
+                const num = Math.floor(Math.random() * 9) + 1;
+                const pos = targetLength - 1;
+                name = name.substring(0, pos) + num;
+            }
+
+            return name.toLowerCase();
+        }
+
+        // Bo'sh bo'lish ehtimolini hisoblash (0 - 100%)
+        function calculateFreeProbability(u) {
+            let score = 55; // Bazaviy ehtimollik
+            if (u.includes('.') || u.includes('_')) score += 25;
+            if (/\d/.test(u)) score += 15;
+            if (/[xzqvjkw]/.test(u)) score += 10;
+            if ((u.match(/[xzqv]/g) || []).length >= 2) score += 15;
+            return Math.min(score, 98);
+        }
+
+        function runGeneration() {
+            const length = parseInt(charLengthInput.value);
+            const style = genStyleSelect.value;
+            const seed = customSeedInput.value.trim();
+
+            const newSet = new Set();
+            let attempts = 0;
+            const maxAttempts = currentBatchCount * 20;
+
+            while (newSet.size < currentBatchCount && attempts < maxAttempts) {
+                attempts++;
+                const u = generateSingleUsername(length, style, seed);
+                // Instagram qoidalariga moslik tekshiruvi:
+                // nuqta boshida/oxirida bo'lmasin, '..' bo'lmasin
+                if (!u.includes('..') && !u.startsWith('.') && !u.endsWith('.')) {
+                    newSet.add(u);
+                }
+            }
+
+            generatedUsernames = Array.from(newSet);
+            renderResults();
+            showToast(`${generatedUsernames.length} ta yangi nik tayyor!`, 'check');
+        }
+        // Natijalarni ekranga chizish (Harflar to'liq ko'rinadigan qilib to'g'rilandi)
+        function renderResults() {
+            if (generatedUsernames.length === 0) {
+                emptyState.classList.remove('hidden');
+                resultsGrid.innerHTML = '';
+                resultsCount.textContent = '0 ta';
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            resultsCount.textContent = `${generatedUsernames.length} ta`;
+            resultsGrid.innerHTML = '';
+
+            generatedUsernames.forEach(username => {
+                const isFav = favorites.includes(username);
+                const prob = calculateFreeProbability(username);
+                const card = document.createElement('div');
+                card.className = "bg-[#141b2d] hover:bg-[#192238] border border-slate-800 hover:border-slate-700/80 rounded-xl p-3 flex flex-col justify-between gap-2.5 shadow transition";
+                
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <!-- Nik to'liq va ochiq ko'rinishi -->
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-rose-500/10 text-rose-400 flex items-center justify-center text-[10px] font-bold font-mono">
+                                ${username.length}h
+                            </span>
+                            <span class="font-mono font-extrabold text-base text-white tracking-wider">
+                                @${username}
+                            </span>
+                        </div>
+
+                        <!-- Bo'sh bo'lish ehtimoli ko'rsatkichi -->
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${prob >= 80 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
+                            ~${prob}% bo'sh
+                        </span>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 gap-1.5">
+                        <!-- Instagramda to'g'ridan-to'g'ri ochish -->
+                        <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" 
+                           class="flex-1 py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-gradient-to-r hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 text-slate-200 hover:text-white transition text-xs font-semibold flex items-center justify-center gap-1.5"
+                           title="Instagram'da ochib ko'rish">
+                            <i class="fa-brands fa-instagram text-sm"></i>
+                            <span>Tekshirish</span>
+                        </a>
+
+                        <!-- Nusxa olish -->
+                        <button onclick="copyToClipboard('${username}')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition text-xs" title="Nusxa olish">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+
+                        <!-- Saqlash -->
+                        <button onclick="toggleFavorite('${username}')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-400 transition text-xs" title="Saqlash">
+                            <i class="${isFav ? 'fa-solid text-amber-400' : 'fa-regular'} fa-bookmark"></i>
+                        </button>
+                    </div>
+                `;
+                resultsGrid.appendChild(card);
+            });
+        }
+
+        window.copyToClipboard = function(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(`@${text} nusxalandi!`, 'copy');
+            } catch (err) {
+                showToast(`Nusxalashda xatolik!`, 'error');
+            }
+            document.body.removeChild(textarea);
+        };
+
+        window.toggleFavorite = function(username) {
+            if (favorites.includes(username)) {
+                favorites = favorites.filter(f => f !== username);
+                showToast(`@${username} saqlanganlardan olib tashlandi`, 'trash');
+            } else {
+                favorites.push(username);
+                showToast(`@${username} saqlanganlarga qo'shildi!`, 'star');
+            }
+            localStorage.setItem('instagen_favs', JSON.stringify(favorites));
+            updateFavoritesBadge();
+            renderResults();
+            renderFavoritesList();
+        };
+
+        function updateFavoritesBadge() {
+            favCountBadge.textContent = favorites.length;
+        }
+
+        // Barcha generatsiya qilingan niklardan nusxa olish
+        copyAllBtn.addEventListener('click', () => {
+            if (generatedUsernames.length === 0) {
+                showToast("Nusxa olish uchun niklar yo'q!", 'error');
+                return;
+            }
+            const allText = generatedUsernames.map(u => `@${u}`).join('\n');
+            copyToClipboard(allText);
+            showToast(`${generatedUsernames.length} ta nikdan nusxa olindi!`, 'check');
+        });
+
+        // TXT fayl sifatida eksport qilish
+        exportTxtBtn.addEventListener('click', () => {
+            if (generatedUsernames.length === 0) {
+                showToast("Yuklash uchun niklar mavjud emas!", 'error');
+                return;
+            }
+            const blob = new Blob([generatedUsernames.join('\n')], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `instagram-5-harfli-niklar-${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("TXT fayl muvaffaqiyatli yuklandi!", 'download');
+        });
+
+        toggleFavoritesBtn.addEventListener('click', () => {
+            favoritesModal.classList.remove('hidden');
+            renderFavoritesList();
+        });
+
+        closeFavoritesBtn.addEventListener('click', () => {
+            favoritesModal.classList.add('hidden');
+        });
+
+        favoritesModal.addEventListener('click', (e) => {
+            if (e.target === favoritesModal) {
+                favoritesModal.classList.add('hidden');
+            }
+        });
+
+        function renderFavoritesList() {
+            if (favorites.length === 0) {
+                favoritesList.innerHTML = `
+                    <div class="py-12 text-center text-slate-500 text-xs space-y-2">
+                        <i class="fa-regular fa-bookmark text-2xl"></i>
+                        <p>Hozircha saqlangan niklar yo'q</p>
+                    </div>
+                `;
+                return;
+            }
+
+            favoritesList.innerHTML = '';
+            favorites.forEach(username => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800";
+                item.innerHTML = `
+                    <span class="font-mono font-bold text-sm text-slate-200">@${username}</span>
+                    <div class="flex items-center gap-1.5">
+                        <a href="https://www.instagram.com/${username}/" target="_blank" class="p-1.5 bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 rounded-lg text-xs transition">
+                            <i class="fa-brands fa-instagram"></i>
+                        </a>
+                        <button onclick="copyToClipboard('${username}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <button onclick="toggleFavorite('${username}')" class="p-1.5 bg-slate-800 hover:bg-rose-900/30 text-rose-400 rounded-lg text-xs transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                favoritesList.appendChild(item);
+            });
+        }
+
+        clearFavoritesBtn.addEventListener('click', () => {
+            if (favorites.length === 0) return;
+            favorites = [];
+            localStorage.setItem('instagen_favs', JSON.stringify(favorites));
+            updateFavoritesBadge();
+            renderFavoritesList();
+            renderResults();
+            showToast("Saqlanganlar tozalandi", 'trash');
+        });
+
+        exportFavsBtn.addEventListener('click', () => {
+            if (favorites.length === 0) {
+                showToast("Saqlangan niklar mavjud emas!", 'error');
+                return;
+            }
+            const blob = new Blob([favorites.join('\n')], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `saqlangan-instagram-niklar.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Toast xabarnomasi funksiyasi
+        let toastTimeout;
+        function showToast(message, type = 'check') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            clearTimeout(toastTimeout);
+            toastMessage.textContent = message;
+
+            if (type === 'copy') {
+                toastIcon.className = 'fa-regular fa-copy text-sky-400 text-lg';
+            } else if (type === 'star') {
+                toastIcon.className = 'fa-solid fa-star text-amber-400 text-lg';
+            } else if (type === 'error') {
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-rose-400 text-lg';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 2500);
+        }
+
+        window.onload = function() {
+            runGeneration();
+        };
+    </script>
+</body>
+</html>
+```
