@@ -1,1177 +1,2295 @@
-"use client";
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050507" />
+  <meta name="description" content="IG Name Finder - Instagram Username Generator & Pattern Finder" />
+  <title>IG Name Finder — Username Generator</title>
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  Activity,
-  BarChart3,
-  Check,
-  ChevronDown,
-  Clipboard,
-  Copy,
-  Download,
-  Eraser,
-  ExternalLink,
-  Gauge,
-  Hash,
-  Layers3,
-  Search,
-  Settings2,
-  Sparkles,
-  Star,
-  Trash2,
-  Zap,
-} from "lucide-react";
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-type LengthMode = "4" | "5" | "6" | "7" | "custom";
-type StyleMode = "rare" | "aesthetic" | "brand" | "random";
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-type UsernameItem = {
-  username: string;
-  score: number;
-  chars: number;
-  style: StyleMode;
-};
+    :root {
+      --bg: #050507;
+      --card: rgba(255,255,255,.035);
+      --card-hover: rgba(255,255,255,.055);
+      --border: rgba(255,255,255,.09);
+      --muted: #71717a;
+      --text: #f4f4f5;
+      --purple: #8b5cf6;
+      --purple2: #7c3aed;
+      --pink: #d946ef;
+      --green: #34d399;
+      --red: #fb7185;
+      --yellow: #fbbf24;
+    }
 
-const STORAGE_KEY = "ig-name-finder-results-v1";
+    body {
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(124,58,237,.15), transparent 35%),
+        radial-gradient(circle at 100% 100%, rgba(217,70,239,.08), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
 
-const letters = "abcdefghijklmnopqrstuvwxyz";
-const vowels = "aeiou";
-const consonants = "bcdfghjklmnpqrstvwxyz";
-const rareConsonants = "xzqvkjwfy";
-const digits = "0123456789";
+    button,
+    input,
+    select {
+      font: inherit;
+    }
 
-const brandPrefixes = [
-  "neo",
-  "zen",
-  "vox",
-  "nex",
-  "syn",
-  "vex",
-  "tek",
-  "lux",
-  "nov",
-  "xen",
-  "zen",
-  "arc",
-  "zen",
-  "ori",
-  "aero",
-];
+    button {
+      cursor: pointer;
+    }
 
-const brandSuffixes = [
-  "lab",
-  "hub",
-  "x",
-  "io",
-  "ly",
-  "fy",
-  "ify",
-  "tech",
-  "core",
-  "base",
-  "nova",
-  "verse",
-  "works",
-  "flow",
-  "zone",
-];
+    .container {
+      width: min(1380px, calc(100% - 32px));
+      margin: auto;
+      padding: 18px 0 40px;
+    }
 
-const aestheticChunks = [
-  "ai",
-  "io",
-  "ae",
-  "ly",
-  "mi",
-  "vi",
-  "lu",
-  "no",
-  "el",
-  "or",
-  "va",
-  "ri",
-  "za",
-  "xe",
-  "vi",
-  "ka",
-  "re",
-];
+    /* HEADER */
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border-radius: 18px;
+      margin-bottom: 28px;
+    }
 
-function randomFrom(str: string) {
-  return str[Math.floor(Math.random() * str.length)];
-}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-function randomInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+    .logo {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #7c3aed, #d946ef);
+      box-shadow: 0 12px 40px rgba(124,58,237,.25);
+    }
 
-function shuffle<T>(array: T[]) {
-  return [...array].sort(() => Math.random() - 0.5);
-}
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
 
-function normalizeBase(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
+    .brand-sub {
+      font-size: 11px;
+      color: #71717a;
+      margin-top: 2px;
+    }
 
-function validUsername(username: string) {
-  if (!username) return false;
-  if (username.length < 1 || username.length > 30) return false;
-  if (!/^[a-z0-9._]+$/.test(username)) return false;
-  if (/^[._]/.test(username)) return false;
-  if (/[._]$/.test(username)) return false;
-  if (/[._]{2,}/.test(username)) return false;
-  return true;
-}
+    .engine {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(52,211,153,.2);
+      background: rgba(52,211,153,.05);
+      color: #6ee7b7;
+      padding: 9px 13px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
 
-/**
- * Bu haqiqiy Instagram availability emas.
- * Username patternining noodatiyligini hisoblaydi.
- */
-function calculateRarityScore(username: string) {
-  let score = 50;
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #34d399;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #34d399;
+    }
 
-  const unique = new Set(username.replace(/[._]/g, "")).size;
-  const cleanLength = username.replace(/[._]/g, "").length;
+    /* HERO */
 
-  // Unique character ratio
-  if (cleanLength > 0) {
-    const uniqueRatio = unique / cleanLength;
-    score += Math.round((uniqueRatio - 0.5) * 35);
-  }
+    .hero {
+      margin-bottom: 24px;
+    }
 
-  // Rare characters
-  const rareCount = [...username].filter((c) =>
-    rareConsonants.includes(c)
-  ).length;
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #a78bfa;
+      text-transform: uppercase;
+      letter-spacing: .18em;
+      font-size: 10px;
+      font-weight: 800;
+      margin-bottom: 9px;
+    }
 
-  score += rareCount * 5;
+    .hero h1 {
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -.04em;
+      max-width: 850px;
+    }
 
-  // Unusual bigram/trigram patterns
-  const unusualPatterns = [
-    "zx",
-    "xz",
-    "qz",
-    "vq",
-    "xq",
-    "qv",
-    "kj",
-    "jw",
-    "vx",
-    "zv",
-    "qx",
-    "xj",
-  ];
+    .gradient {
+      background: linear-gradient(90deg, #a78bfa, #e879f9, #f0abfc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
 
-  unusualPatterns.forEach((pattern) => {
-    if (username.includes(pattern)) score += 7;
-  });
+    .hero p {
+      max-width: 760px;
+      margin-top: 12px;
+      color: #71717a;
+      line-height: 1.7;
+      font-size: 14px;
+    }
 
-  // Dictionary-looking words are usually less unusual
-  const commonPatterns = [
-    "official",
-    "admin",
-    "shop",
-    "store",
-    "music",
-    "photo",
-    "love",
-    "cool",
-    "boy",
-    "girl",
-  ];
+    /* STATS */
 
-  commonPatterns.forEach((word) => {
-    if (username.includes(word)) score -= 10;
-  });
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
 
-  // Longer names have more combination possibilities
-  if (cleanLength >= 6) score += 4;
-  if (cleanLength >= 8) score += 4;
+    .stat {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 17px;
+      padding: 16px;
+      backdrop-filter: blur(20px);
+    }
 
-  return clamp(Math.round(score), 51, 99);
-}
+    .stat-top {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #71717a;
+      font-size: 11px;
+      margin-bottom: 12px;
+    }
 
-function makeRare(length: number, base: string) {
-  let result = "";
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.07);
+    }
 
-  if (base) {
-    result = base.slice(0, length);
-  }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 900;
+    }
 
-  while (result.length < length) {
-    const useRare = Math.random() < 0.48;
-    result += randomFrom(useRare ? rareConsonants : letters);
-  }
+    /* MAIN GRID */
 
-  return result.slice(0, length);
-}
+    .main-grid {
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
 
-function makeAesthetic(length: number, base: string) {
-  let result = "";
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 18px;
+      backdrop-filter: blur(20px);
+    }
 
-  if (base) {
-    result = base.slice(0, Math.min(base.length, length));
-  }
+    .settings {
+      padding: 20px;
+      position: sticky;
+      top: 15px;
+    }
 
-  while (result.length < length) {
-    const chunk =
-      Math.random() < 0.7
-        ? randomFrom(aestheticChunks)
-        : randomFrom(letters);
+    .settings-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 22px;
+    }
 
-    result += chunk;
-  }
+    .section {
+      margin-bottom: 23px;
+    }
 
-  return result.slice(0, length);
-}
+    .section-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
 
-function makeBrand(length: number, base: string) {
-  const prefix = randomFrom(brandPrefixes);
-  const suffix = randomFrom(brandSuffixes);
+    /* LENGTH */
 
-  const variants = [
-    `${prefix}${base}`,
-    `${base}${suffix}`,
-    `${prefix}${base}${suffix}`,
-    `${prefix}${suffix}`,
-    `${base}${randomFrom(letters)}`,
-  ];
+    .length-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+    }
 
-  const candidate = randomFrom(variants);
+    .length-btn,
+    .amount-btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      color: #a1a1aa;
+      border-radius: 10px;
+      padding: 10px 5px;
+      transition: .2s;
+    }
 
-  if (candidate.length >= length) {
-    return candidate.slice(0, length);
-  }
+    .length-btn:hover,
+    .amount-btn:hover {
+      background: rgba(255,255,255,.06);
+    }
 
-  return (
-    candidate +
-    Array.from(
-      { length: length - candidate.length },
-      () => randomFrom(letters)
-    ).join("")
-  );
-}
+    .length-btn.active,
+    .amount-btn.active {
+      border-color: rgba(139,92,246,.55);
+      background: rgba(139,92,246,.13);
+      color: #c4b5fd;
+    }
 
-function makeRandom(length: number) {
-  return Array.from({ length }, () => randomFrom(letters)).join("");
-}
+    .custom-btn {
+      width: 100%;
+      margin-top: 7px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      color: #a1a1aa;
+      border-radius: 10px;
+    }
 
-function applySymbols(
-  username: string,
-  length: number,
-  allowUnderscore: boolean,
-  allowDot: boolean,
-  allowNumbers: boolean
-) {
-  let result = username;
+    .custom-box {
+      display: none;
+      margin-top: 9px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: rgba(0,0,0,.2);
+    }
 
-  if (allowNumbers && Math.random() < 0.3) {
-    const position = randomInt(1, Math.max(1, result.length - 1));
-    result =
-      result.slice(0, position) +
-      randomFrom(digits) +
-      result.slice(position);
-  }
+    .custom-box.show {
+      display: block;
+    }
 
-  if (allowUnderscore && Math.random() < 0.2 && result.length > 2) {
-    const position = randomInt(1, result.length - 2);
-    result =
-      result.slice(0, position) +
-      "_" +
-      result.slice(position + 1);
-  }
+    .range-row {
+      display: flex;
+      justify-content: space-between;
+      color: #71717a;
+      font-size: 11px;
+      margin-bottom: 7px;
+    }
 
-  if (allowDot && Math.random() < 0.2 && result.length > 2) {
-    const position = randomInt(1, result.length - 2);
-    result =
-      result.slice(0, position) +
-      "." +
-      result.slice(position + 1);
-  }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #8b5cf6;
+    }
 
-  result = result.replace(/[^a-z0-9._]/g, "");
+    /* TOGGLE */
 
-  // Belgilar ketma-ketligini olib tashlash
-  result = result.replace(/[._]{2,}/g, (match) => match[0]);
+    .toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 12px;
+      border: 1px solid rgba(255,255,255,.05);
+      background: rgba(255,255,255,.02);
+      border-radius: 11px;
+      margin-bottom: 7px;
+      color: #a1a1aa;
+      font-size: 11px;
+      text-align: left;
+    }
 
-  // Boshida yoki oxirida bo‘lmasin
-  result = result.replace(/^[._]+/, "").replace(/[._]+$/, "");
+    .switch {
+      width: 36px;
+      height: 20px;
+      border-radius: 20px;
+      background: #27272a;
+      position: relative;
+      transition: .2s;
+      flex-shrink: 0;
+    }
 
-  if (!allowUnderscore) {
-    result = result.replace(/_/g, "");
-  }
+    .switch::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      top: 4px;
+      left: 4px;
+      border-radius: 50%;
+      background: white;
+      transition: .2s;
+    }
 
-  if (!allowDot) {
-    result = result.replace(/\./g, "");
-  }
+    .toggle.on .switch {
+      background: #7c3aed;
+    }
 
-  if (!allowNumbers) {
-    result = result.replace(/[0-9]/g, "");
-  }
+    .toggle.on .switch::after {
+      left: 20px;
+    }
 
-  return result.slice(0, length);
-}
+    .hint {
+      color: #52525b;
+      font-size: 10px;
+      line-height: 1.6;
+      margin-top: 7px;
+    }
 
-function generateUsername(
-  length: number,
-  style: StyleMode,
-  base: string,
-  allowUnderscore: boolean,
-  allowDot: boolean,
-  allowNumbers: boolean
-) {
-  let candidate = "";
+    /* STYLE */
 
-  switch (style) {
-    case "rare":
-      candidate = makeRare(length, base);
-      break;
+    .style-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,.05);
+      background: rgba(255,255,255,.02);
+      border-radius: 11px;
+      color: #71717a;
+      text-align: left;
+      margin-bottom: 7px;
+      transition: .2s;
+    }
 
-    case "aesthetic":
-      candidate = makeAesthetic(length, base);
-      break;
+    .style-btn:hover {
+      background: rgba(255,255,255,.05);
+    }
 
-    case "brand":
-      candidate = makeBrand(length, base);
-      break;
+    .style-btn.active {
+      border-color: rgba(139,92,246,.4);
+      background: rgba(139,92,246,.09);
+      color: #c4b5fd;
+    }
 
-    case "random":
-      candidate = makeRandom(length);
-      break;
-  }
+    .style-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,.05);
+    }
 
-  candidate = applySymbols(
-    candidate,
-    length,
-    allowUnderscore,
-    allowDot,
-    allowNumbers
-  );
+    .style-title {
+      font-size: 11px;
+      font-weight: 700;
+    }
 
-  // Juda qisqa bo‘lib qolsa qayta to‘ldirish
-  if (candidate.length < length) {
-    const available =
-      letters +
-      (allowNumbers ? digits : "") +
-      (allowUnderscore ? "_" : "") +
-      (allowDot ? "." : "");
+    .style-desc {
+      color: #52525b;
+      font-size: 9px;
+      margin-top: 3px;
+    }
 
-    while (candidate.length < length) {
-      const char = randomFrom(available);
+    /* INPUT */
 
-      if (
-        (char === "_" || char === ".") &&
-        (candidate.endsWith("_") || candidate.endsWith("."))
-      ) {
-        continue;
+    .text-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      border-radius: 11px;
+      outline: none;
+      color: white;
+      font-size: 12px;
+    }
+
+    .text-input:focus {
+      border-color: rgba(139,92,246,.55);
+      box-shadow: 0 0 0 3px rgba(139,92,246,.08);
+    }
+
+    .amount-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .generate {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      color: white;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 14px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #7c3aed, #c026d3);
+      box-shadow: 0 12px 35px rgba(124,58,237,.2);
+      transition: .2s;
+    }
+
+    .generate:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+
+    .generate:active {
+      transform: scale(.99);
+    }
+
+    /* RESULTS */
+
+    .toolbar {
+      padding: 11px;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .search {
+      flex: 1;
+      position: relative;
+    }
+
+    .search svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #52525b;
+    }
+
+    .search input {
+      padding-left: 38px;
+    }
+
+    .toolbar-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      color: #a1a1aa;
+      border-radius: 11px;
+      padding: 0 13px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .toolbar-btn:hover {
+      background: rgba(255,255,255,.07);
+    }
+
+    .toolbar-btn:disabled {
+      opacity: .3;
+      cursor: not-allowed;
+    }
+
+    .notice {
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(251,191,36,.12);
+      background: rgba(251,191,36,.035);
+      color: #a8a29e;
+      border-radius: 12px;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    .notice strong {
+      color: #fbbf24;
+    }
+
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .result {
+      padding: 15px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 16px;
+      transition: .2s;
+    }
+
+    .result:hover {
+      border-color: rgba(139,92,246,.22);
+      background: var(--card-hover);
+    }
+
+    .result-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .username {
+      font-size: 17px;
+      font-weight: 800;
+      word-break: break-all;
+    }
+
+    .chars {
+      display: inline-block;
+      margin-left: 7px;
+      padding: 3px 7px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: #71717a;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .score {
+      color: #6ee7b7;
+      border: 1px solid rgba(52,211,153,.14);
+      background: rgba(52,211,153,.045);
+    }
+
+    .style-badge {
+      color: #c4b5fd;
+      border: 1px solid rgba(139,92,246,.13);
+      background: rgba(139,92,246,.05);
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      color: #a1a1aa;
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .action:hover {
+      background: rgba(255,255,255,.08);
+    }
+
+    .action.instagram {
+      background: rgba(124,58,237,.85);
+      color: white;
+      border-color: transparent;
+    }
+
+    .progress {
+      height: 3px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.05);
+      overflow: hidden;
+      margin-top: 13px;
+    }
+
+    .progress div {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg,#7c3aed,#d946ef,#34d399);
+    }
+
+    /* EMPTY */
+
+    .empty {
+      min-height: 430px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 30px;
+      border: 1px dashed rgba(255,255,255,.1);
+      border-radius: 18px;
+      background: rgba(255,255,255,.015);
+    }
+
+    .empty-icon {
+      width: 62px;
+      height: 62px;
+      display: grid;
+      place-items: center;
+      border-radius: 17px;
+      background: rgba(139,92,246,.1);
+      border: 1px solid rgba(139,92,246,.18);
+      color: #a78bfa;
+      margin-bottom: 14px;
+    }
+
+    .empty h3 {
+      font-size: 15px;
+    }
+
+    .empty p {
+      max-width: 390px;
+      color: #52525b;
+      font-size: 12px;
+      line-height: 1.7;
+      margin-top: 7px;
+    }
+
+    .bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #52525b;
+      font-size: 10px;
+      margin-top: 14px;
+    }
+
+    .clear-link {
+      background: none;
+      border: none;
+      color: #52525b;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .clear-link:hover {
+      color: #fb7185;
+    }
+
+    footer {
+      border-top: 1px solid rgba(255,255,255,.05);
+      margin-top: 32px;
+      padding-top: 18px;
+      text-align: center;
+      color: #3f3f46;
+      font-size: 9px;
+      line-height: 1.8;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
       }
 
-      candidate += char;
-    }
-  }
-
-  candidate = candidate.slice(0, length);
-
-  if (!validUsername(candidate)) {
-    return generateUsername(
-      length,
-      style,
-      base,
-      allowUnderscore,
-      allowDot,
-      allowNumbers
-    );
-  }
-
-  return candidate;
-}
-
-export default function Home() {
-  const [lengthMode, setLengthMode] = useState<LengthMode>("5");
-
-  const [customMin, setCustomMin] = useState(4);
-  const [customMax, setCustomMax] = useState(12);
-
-  const [allowUnderscore, setAllowUnderscore] = useState(true);
-  const [allowDot, setAllowDot] = useState(false);
-  const [allowNumbers, setAllowNumbers] = useState(false);
-
-  const [style, setStyle] = useState<StyleMode>("rare");
-
-  const [baseWord, setBaseWord] = useState("");
-  const [amount, setAmount] = useState(30);
-
-  const [results, setResults] = useState<UsernameItem[]>([]);
-  const [search, setSearch] = useState("");
-
-  const [copied, setCopied] = useState<string | null>(null);
-  const [generatedAt, setGeneratedAt] = useState("");
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-
-      if (saved) {
-        const parsed = JSON.parse(saved);
-
-        if (Array.isArray(parsed)) {
-          setResults(parsed);
-        }
+      .settings {
+        position: static;
       }
-    } catch {
-      // localStorage mavjud bo'lmasa ham app ishlashda davom etadi
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(results));
-    } catch {
-      // ignore
-    }
-  }, [results]);
-
-  const selectedLengthLabel = useMemo(() => {
-    if (lengthMode === "custom") {
-      return `${customMin}–${customMax}`;
     }
 
-    return `${lengthMode} chars`;
-  }, [lengthMode, customMin, customMax]);
+    @media (max-width: 650px) {
+      .container {
+        width: min(100% - 20px, 1380px);
+        padding-top: 10px;
+      }
 
-  const filteredResults = useMemo(() => {
-    const q = search.trim().toLowerCase();
+      .header {
+        padding: 12px;
+      }
 
-    if (!q) return results;
+      .engine {
+        font-size: 9px;
+      }
 
-    return results.filter((item) =>
-      item.username.toLowerCase().includes(q)
-    );
-  }, [results, search]);
+      .stats {
+        grid-template-columns: 1fr;
+      }
 
-  const averageScore = useMemo(() => {
-    if (!results.length) return 0;
+      .toolbar {
+        flex-wrap: wrap;
+      }
 
-    return Math.round(
-      results.reduce((sum, item) => sum + item.score, 0) / results.length
-    );
-  }, [results]);
+      .search {
+        width: 100%;
+        flex-basis: 100%;
+      }
 
-  function getLength() {
-    if (lengthMode === "custom") {
-      return randomInt(customMin, customMax);
+      .toolbar-btn {
+        flex: 1;
+        padding: 11px 7px;
+      }
+
+      .result-main {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .result-actions {
+        width: 100%;
+      }
+
+      .action {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .bottom {
+        flex-direction: column;
+        gap: 8px;
+      }
     }
 
-    return Number(lengthMode);
+    @media (max-width: 420px) {
+      .brand-sub {
+        display: none;
+      }
+
+      .engine {
+        padding: 7px 9px;
+      }
+
+      .engine span:not(.dot) {
+        display: none;
+      }
+
+      .hero h1 {
+        font-size: 30px;
+      }
+
+      .settings {
+        padding: 15px;
+      }
+
+      .result {
+        padding: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo">
+        <i data-lucide="sparkles"></i>
+      </div>
+
+      <div>
+        <div class="brand-title">IG Name Finder</div>
+        <div class="brand-sub">Username Generator & Pattern Finder</div>
+      </div>
+    </div>
+
+    <div class="engine">
+      <span class="dot"></span>
+      <span>Engine: Pattern Predictor</span>
+      <strong>Active</strong>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="eyebrow">
+      <i data-lucide="zap" width="13"></i>
+      Client-side engine
+    </div>
+
+    <h1>
+      Find unusual names before
+      <span class="gradient">everyone else.</span>
+    </h1>
+
+    <p>
+      Instagram serveriga avtomatik ulanmaydi. Algoritm noodatiy,
+      kamyob va brendbop username patternlarini yaratadi va
+      ularning noyoblik skorini hisoblaydi.
+    </p>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats">
+
+    <div class="stat">
+      <div class="stat-top">
+        <div class="stat-icon">
+          <i data-lucide="layers-3" width="16"></i>
+        </div>
+        Generatsiya qilingan
+      </div>
+      <div class="stat-value" id="totalStat">0</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-top">
+        <div class="stat-icon">
+          <i data-lucide="gauge" width="16"></i>
+        </div>
+        O'rtacha noyoblik
+      </div>
+      <div class="stat-value" id="averageStat">—</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-top">
+        <div class="stat-icon">
+          <i data-lucide="hash" width="16"></i>
+        </div>
+        Tanlangan uzunlik
+      </div>
+      <div class="stat-value" id="lengthStat">5 chars</div>
+    </div>
+
+  </section>
+
+  <!-- MAIN -->
+  <div class="main-grid">
+
+    <!-- SETTINGS -->
+    <aside class="panel settings">
+
+      <div class="settings-title">
+        <i data-lucide="settings-2" width="18"></i>
+        Generation Settings
+      </div>
+
+      <!-- LENGTH -->
+      <div class="section">
+
+        <label class="section-label">Uzunlik</label>
+
+        <div class="length-grid">
+
+          <button class="length-btn" data-length="4">4</button>
+          <button class="length-btn active" data-length="5">5</button>
+          <button class="length-btn" data-length="6">6</button>
+          <button class="length-btn" data-length="7">7</button>
+
+        </div>
+
+        <button class="custom-btn" id="customToggle">
+          <span>Maxsus uzunlik</span>
+          <i data-lucide="chevron-down" width="15"></i>
+        </button>
+
+        <div class="custom-box" id="customBox">
+
+          <div class="range-row">
+            <span>Min: <b id="minValue">4</b></span>
+            <span>Max: <b id="maxValue">12</b></span>
+          </div>
+
+          <input id="minRange" type="range" min="1" max="30" value="4">
+          <input id="maxRange" type="range" min="1" max="30" value="12">
+
+        </div>
+
+      </div>
+
+      <!-- CHARACTER RULES -->
+      <div class="section">
+
+        <label class="section-label">Belgilar</label>
+
+        <button class="toggle on" data-toggle="underscore">
+          <span>Pastki chiziqcha (_) ruxsat</span>
+          <span class="switch"></span>
+        </button>
+
+        <button class="toggle" data-toggle="dot">
+          <span>Nuqta (.) ruxsat</span>
+          <span class="switch"></span>
+        </button>
+
+        <button class="toggle" data-toggle="numbers">
+          <span>Raqamlar (0-9) ruxsat</span>
+          <span class="switch"></span>
+        </button>
+
+        <div class="hint">
+          Nuqta yoki chiziqcha boshida, oxirida yoki ketma-ket kelmaydi.
+        </div>
+
+      </div>
+
+      <!-- STYLE -->
+      <div class="section">
+
+        <label class="section-label">Generation Style</label>
+
+        <button class="style-btn active" data-style="rare">
+          <div class="style-icon">
+            <i data-lucide="star" width="14"></i>
+          </div>
+          <div>
+            <div class="style-title">High Probability / Rare</div>
+            <div class="style-desc">Noodatiy harf patternlari</div>
+          </div>
+        </button>
+
+        <button class="style-btn" data-style="aesthetic">
+          <div class="style-icon">
+            <i data-lucide="sparkles" width="14"></i>
+          </div>
+          <div>
+            <div class="style-title">Aesthetic / Minimal</div>
+            <div class="style-desc">O'qilishi oson va chiroyli</div>
+          </div>
+        </button>
+
+        <button class="style-btn" data-style="brand">
+          <div class="style-icon">
+            <i data-lucide="activity" width="14"></i>
+          </div>
+          <div>
+            <div class="style-title">Brand / Tech</div>
+            <div class="style-desc">Startap va texnologik</div>
+          </div>
+        </button>
+
+        <button class="style-btn" data-style="random">
+          <div class="style-icon">
+            <i data-lucide="shuffle" width="14"></i>
+          </div>
+          <div>
+            <div class="style-title">Randomized Combinations</div>
+            <div class="style-desc">To'liq tasodifiy</div>
+          </div>
+        </button>
+
+      </div>
+
+      <!-- BASE WORD -->
+      <div class="section">
+
+        <label class="section-label">
+          Base word
+          <span style="color:#52525b;font-weight:400;"> — ixtiyoriy</span>
+        </label>
+
+        <input
+          id="baseWord"
+          class="text-input"
+          maxlength="30"
+          placeholder="masalan: amin"
+        >
+
+      </div>
+
+      <!-- AMOUNT -->
+      <div class="section">
+
+        <label class="section-label">Miqdor</label>
+
+        <div class="amount-grid">
+          <button class="amount-btn" data-amount="20">20</button>
+          <button class="amount-btn active" data-amount="30">30</button>
+          <button class="amount-btn" data-amount="50">50</button>
+        </div>
+
+      </div>
+
+      <button class="generate" id="generateBtn">
+        <i data-lucide="sparkles" width="16"></i>
+        Generate usernames
+      </button>
+
+    </aside>
+
+    <!-- RESULTS -->
+    <section>
+
+      <div class="panel toolbar">
+
+        <div class="search">
+          <i data-lucide="search" width="16"></i>
+          <input
+            id="searchInput"
+            class="text-input"
+            placeholder="Username qidirish..."
+          >
+        </div>
+
+        <button class="toolbar-btn" id="copyAllBtn">
+          <i data-lucide="copy" width="14"></i>
+          Copy All
+        </button>
+
+        <button class="toolbar-btn" id="exportBtn">
+          <i data-lucide="download" width="14"></i>
+          Export TXT
+        </button>
+
+        <button class="toolbar-btn" id="clearBtn">
+          <i data-lucide="trash-2" width="14"></i>
+          Tozalash
+        </button>
+
+      </div>
+
+      <div class="notice">
+        <strong>Eslatma:</strong>
+        Noyoblik skori Instagram'dagi real mavjudlikni tasdiqlamaydi.
+        Username'ni olishdan oldin Instagram'da tekshiring.
+      </div>
+
+      <div id="results"></div>
+
+      <div class="bottom">
+        <span id="resultCount">0 ta username</span>
+
+        <button class="clear-link" id="clearBottom">
+          <i data-lucide="eraser" width="13"></i>
+          Barcha natijalarni tozalash
+        </button>
+      </div>
+
+    </section>
+
+  </div>
+
+  <footer>
+    IG Name Finder • Pattern Predictor Engine • Client-side only
+    <br>
+    Pattern score real Instagram availability guarantee emas.
+  </footer>
+
+</div>
+
+<script>
+
+  /* ============================
+     STATE
+  ============================ */
+
+  const STORAGE_KEY = "ig-name-finder-results-v1";
+
+  let state = {
+    lengthMode: 5,
+    customMin: 4,
+    customMax: 12,
+
+    underscore: true,
+    dot: false,
+    numbers: false,
+
+    style: "rare",
+    baseWord: "",
+    amount: 30,
+
+    results: []
+  };
+
+
+  /* ============================
+     DATA
+  ============================ */
+
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const vowels = "aeiou";
+  const consonants = "bcdfghjklmnpqrstvwxyz";
+  const rareConsonants = "xzqvkjwfy";
+  const digits = "0123456789";
+
+  const brandPrefixes = [
+    "neo","zen","vox","nex","syn","vex",
+    "tek","lux","nov","xen","arc","ori",
+    "aero","quant","pixel","meta"
+  ];
+
+  const brandSuffixes = [
+    "lab","hub","x","io","ly","fy","ify",
+    "tech","core","base","nova","verse",
+    "works","flow","zone"
+  ];
+
+  const aestheticChunks = [
+    "ai","io","ae","ly","mi","vi","lu",
+    "no","el","or","va","ri","za","xe",
+    "ka","re"
+  ];
+
+
+  /* ============================
+     HELPERS
+  ============================ */
+
+  function randomFrom(str) {
+    return str[Math.floor(Math.random() * str.length)];
   }
+
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function normalizeBase(value) {
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function validUsername(username) {
+
+    if (!username) return false;
+
+    if (username.length < 1 || username.length > 30)
+      return false;
+
+    if (!/^[a-z0-9._]+$/.test(username))
+      return false;
+
+    if (/^[._]/.test(username))
+      return false;
+
+    if (/[._]$/.test(username))
+      return false;
+
+    if (/[._]{2,}/.test(username))
+      return false;
+
+    return true;
+  }
+
+
+  /* ============================
+     RARITY SCORE
+  ============================ */
+
+  function calculateRarityScore(username) {
+
+    let score = 50;
+
+    const clean = username.replace(/[._]/g, "");
+
+    const unique = new Set(clean).size;
+
+    if (clean.length) {
+
+      const ratio = unique / clean.length;
+
+      score += Math.round((ratio - 0.5) * 35);
+    }
+
+    const rareCount = [...username]
+      .filter(c => rareConsonants.includes(c))
+      .length;
+
+    score += rareCount * 5;
+
+    const unusualPatterns = [
+      "zx","xz","qz","vq","xq",
+      "qv","kj","jw","vx","zv",
+      "qx","xj"
+    ];
+
+    unusualPatterns.forEach(pattern => {
+
+      if (username.includes(pattern))
+        score += 7;
+
+    });
+
+    const commonPatterns = [
+      "official","admin","shop",
+      "store","music","photo",
+      "love","cool","boy","girl"
+    ];
+
+    commonPatterns.forEach(word => {
+
+      if (username.includes(word))
+        score -= 10;
+
+    });
+
+    if (clean.length >= 6)
+      score += 4;
+
+    if (clean.length >= 8)
+      score += 4;
+
+    return clamp(Math.round(score), 51, 99);
+  }
+
+
+  /* ============================
+     GENERATORS
+  ============================ */
+
+  function makeRare(length, base) {
+
+    let result = "";
+
+    if (base)
+      result = base.slice(0, length);
+
+    while (result.length < length) {
+
+      const source =
+        Math.random() < .48
+          ? rareConsonants
+          : letters;
+
+      result += randomFrom(source);
+    }
+
+    return result.slice(0, length);
+  }
+
+
+  function makeAesthetic(length, base) {
+
+    let result = "";
+
+    if (base)
+      result = base.slice(0, length);
+
+    while (result.length < length) {
+
+      const chunk =
+        Math.random() < .7
+          ? aestheticChunks[
+              Math.floor(Math.random() * aestheticChunks.length)
+            ]
+          : randomFrom(letters);
+
+      result += chunk;
+    }
+
+    return result.slice(0, length);
+  }
+
+
+  function makeBrand(length, base) {
+
+    const prefix =
+      brandPrefixes[
+        Math.floor(Math.random() * brandPrefixes.length)
+      ];
+
+    const suffix =
+      brandSuffixes[
+        Math.floor(Math.random() * brandSuffixes.length)
+      ];
+
+    const options = [
+
+      prefix + base,
+      base + suffix,
+      prefix + base + suffix,
+      prefix + suffix,
+      base + randomFrom(letters)
+
+    ];
+
+    let result =
+      options[Math.floor(Math.random() * options.length)];
+
+    while (result.length < length)
+      result += randomFrom(letters);
+
+    return result.slice(0, length);
+  }
+
+
+  function makeRandom(length) {
+
+    let result = "";
+
+    for (let i = 0; i < length; i++)
+      result += randomFrom(letters);
+
+    return result;
+  }
+
+
+  /* ============================
+     SYMBOLS
+  ============================ */
+
+  function applySymbols(username, length) {
+
+    let result = username;
+
+    if (
+      state.numbers &&
+      Math.random() < .3 &&
+      result.length > 2
+    ) {
+
+      const position =
+        randomInt(1, result.length - 1);
+
+      result =
+        result.slice(0, position) +
+        randomFrom(digits) +
+        result.slice(position);
+    }
+
+
+    if (
+      state.underscore &&
+      Math.random() < .2 &&
+      result.length > 2
+    ) {
+
+      const position =
+        randomInt(1, result.length - 2);
+
+      result =
+        result.slice(0, position) +
+        "_" +
+        result.slice(position + 1);
+    }
+
+
+    if (
+      state.dot &&
+      Math.random() < .2 &&
+      result.length > 2
+    ) {
+
+      const position =
+        randomInt(1, result.length - 2);
+
+      result =
+        result.slice(0, position) +
+        "." +
+        result.slice(position + 1);
+    }
+
+
+    if (!state.underscore)
+      result = result.replace(/_/g, "");
+
+    if (!state.dot)
+      result = result.replace(/\./g, "");
+
+    if (!state.numbers)
+      result = result.replace(/[0-9]/g, "");
+
+
+    result = result.replace(/[^a-z0-9._]/g, "");
+
+    result = result.replace(/[._]{2,}/g, match => match[0]);
+
+    result = result
+      .replace(/^[._]+/, "")
+      .replace(/[._]+$/, "");
+
+    return result.slice(0, length);
+  }
+
+
+  /* ============================
+     GENERATE ONE
+  ============================ */
+
+  function generateOne(length) {
+
+    let result = "";
+
+    const base = normalizeBase(state.baseWord);
+
+    if (state.style === "rare")
+      result = makeRare(length, base);
+
+    if (state.style === "aesthetic")
+      result = makeAesthetic(length, base);
+
+    if (state.style === "brand")
+      result = makeBrand(length, base);
+
+    if (state.style === "random")
+      result = makeRandom(length);
+
+    result = applySymbols(result, length);
+
+    let safety = 0;
+
+    while (
+      result.length < length &&
+      safety < 100
+    ) {
+
+      safety++;
+
+      let available = letters;
+
+      if (state.numbers)
+        available += digits;
+
+      result += randomFrom(available);
+
+      result = result.slice(0, length);
+    }
+
+    if (!validUsername(result)) {
+
+      return generateOne(length);
+
+    }
+
+    return result;
+  }
+
+
+  /* ============================
+     GENERATE
+  ============================ */
 
   function generate() {
-    const generated: UsernameItem[] = [];
-    const used = new Set(results.map((item) => item.username));
+
+    const newResults = [];
+
+    const existing =
+      new Set(
+        state.results.map(item => item.username)
+      );
 
     let attempts = 0;
 
-    while (generated.length < amount && attempts < amount * 100) {
+    while (
+      newResults.length < state.amount &&
+      attempts < state.amount * 100
+    ) {
+
       attempts++;
 
-      const length = getLength();
+      let length;
 
-      const username = generateUsername(
-        length,
-        style,
-        normalizeBase(baseWord),
-        allowUnderscore,
-        allowDot,
-        allowNumbers
-      );
+      if (state.lengthMode === "custom") {
 
-      if (!validUsername(username)) continue;
+        length =
+          randomInt(
+            state.customMin,
+            state.customMax
+          );
 
-      if (used.has(username)) continue;
+      } else {
 
-      used.add(username);
+        length =
+          Number(state.lengthMode);
 
-      generated.push({
+      }
+
+      const username =
+        generateOne(length);
+
+      if (!validUsername(username))
+        continue;
+
+      if (existing.has(username))
+        continue;
+
+      existing.add(username);
+
+      newResults.push({
+
         username,
-        score: calculateRarityScore(username),
-        chars: username.length,
-        style,
+
+        score:
+          calculateRarityScore(username),
+
+        chars:
+          username.length,
+
+        style:
+          state.style
+
       });
     }
 
-    setResults((prev) => [...generated, ...prev]);
-    setGeneratedAt(
-      new Date().toLocaleTimeString("uz-UZ", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    );
+    state.results =
+      [...newResults, ...state.results];
+
+    save();
+
+    render();
   }
 
-  async function copyUsername(username: string) {
-    try {
-      await navigator.clipboard.writeText(`@${username}`);
 
-      setCopied(username);
+  /* ============================
+     SAVE
+  ============================ */
 
-      setTimeout(() => {
-        setCopied(null);
-      }, 1200);
-    } catch {
-      // Clipboard permission bo'lmasa
-    }
-  }
-
-  async function copyAll() {
-    if (!results.length) return;
+  function save() {
 
     try {
-      await navigator.clipboard.writeText(
-        results.map((item) => `@${item.username}`).join("\n")
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(state.results)
       );
 
-      setCopied("__all__");
+    } catch (error) {
 
-      setTimeout(() => {
-        setCopied(null);
-      }, 1200);
-    } catch {
-      // ignore
+      console.log("Storage error:", error);
+
     }
   }
 
+
+  /* ============================
+     LOAD
+  ============================ */
+
+  function load() {
+
+    try {
+
+      const saved =
+        localStorage.getItem(STORAGE_KEY);
+
+      if (saved) {
+
+        const parsed =
+          JSON.parse(saved);
+
+        if (Array.isArray(parsed))
+          state.results = parsed;
+
+      }
+
+    } catch (error) {
+
+      console.log("Load error:", error);
+
+    }
+
+  }
+
+
+  /* ============================
+     COPY
+  ============================ */
+
+  async function copyUsername(username, button) {
+
+    try {
+
+      await navigator.clipboard.writeText(
+        "@" + username
+      );
+
+      const old =
+        button.innerHTML;
+
+      button.innerHTML =
+        '<i data-lucide="check" width="14"></i> Nusxalandi';
+
+      lucide.createIcons();
+
+      setTimeout(() => {
+
+        button.innerHTML = old;
+
+        lucide.createIcons();
+
+      }, 1200);
+
+    } catch {
+
+      alert("Clipboard ruxsati berilmadi.");
+
+    }
+
+  }
+
+
+  async function copyAll() {
+
+    if (!state.results.length)
+      return;
+
+    const text =
+      state.results
+        .map(item => "@" + item.username)
+        .join("\n");
+
+    try {
+
+      await navigator.clipboard.writeText(text);
+
+      alert(
+        state.results.length +
+        " ta username nusxalandi."
+      );
+
+    } catch {
+
+      alert("Clipboard ruxsati berilmadi.");
+
+    }
+
+  }
+
+
+  /* ============================
+     EXPORT
+  ============================ */
+
   function exportTXT() {
-    if (!results.length) return;
 
-    const text = results.map((item) => `@${item.username}`).join("\n");
+    if (!state.results.length)
+      return;
 
-    const blob = new Blob([text], {
-      type: "text/plain;charset=utf-8",
-    });
+    const text =
+      state.results
+        .map(item => "@" + item.username)
+        .join("\n");
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const blob =
+      new Blob(
+        [text],
+        {
+          type: "text/plain;charset=utf-8"
+        }
+      );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
 
     a.href = url;
-    a.download = "instagram-usernames.txt";
+
+    a.download =
+      "instagram-usernames.txt";
 
     document.body.appendChild(a);
+
     a.click();
+
     a.remove();
 
     URL.revokeObjectURL(url);
   }
 
-  function clearResults() {
-    setResults([]);
-    setSearch("");
 
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  }
+  /* ============================
+     INSTAGRAM
+  ============================ */
 
-  function openInstagram(username: string) {
+  function openInstagram(username) {
+
     window.open(
-      `https://www.instagram.com/${encodeURIComponent(username)}/`,
+      "https://www.instagram.com/" +
+      encodeURIComponent(username) +
+      "/",
       "_blank",
       "noopener,noreferrer"
     );
+
   }
 
-  return (
-    <main className="min-h-screen bg-[#050507] text-white">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-[-300px] h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-violet-700/10 blur-[130px]" />
-        <div className="absolute bottom-[-250px] right-[-100px] h-[500px] w-[500px] rounded-full bg-fuchsia-600/10 blur-[130px]" />
-      </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        {/* Header */}
-        <header className="mb-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-900/30">
-              <Sparkles size={22} />
-            </div>
+  /* ============================
+     CLEAR
+  ============================ */
+
+  function clearResults() {
+
+    if (!state.results.length)
+      return;
+
+    if (
+      !confirm(
+        "Barcha username'larni o'chirishni xohlaysizmi?"
+      )
+    )
+      return;
+
+    state.results = [];
+
+    localStorage.removeItem(
+      STORAGE_KEY
+    );
+
+    render();
+
+  }
+
+
+  /* ============================
+     STYLE LABEL
+  ============================ */
+
+  function styleLabel(style) {
+
+    if (style === "rare")
+      return "Rare";
+
+    if (style === "aesthetic")
+      return "Aesthetic";
+
+    if (style === "brand")
+      return "Brand";
+
+    return "Random";
+  }
+
+
+  /* ============================
+     RENDER
+  ============================ */
+
+  function render() {
+
+    const container =
+      document.getElementById("results");
+
+    const search =
+      document
+        .getElementById("searchInput")
+        .value
+        .trim()
+        .toLowerCase();
+
+    const filtered =
+      state.results.filter(item =>
+        item.username
+          .toLowerCase()
+          .includes(search)
+      );
+
+
+    /* STATS */
+
+    document.getElementById("totalStat")
+      .textContent =
+      state.results.length;
+
+    document.getElementById("averageStat")
+      .textContent =
+      state.results.length
+        ? Math.round(
+            state.results.reduce(
+              (sum, item) =>
+                sum + item.score,
+              0
+            ) /
+            state.results.length
+          ) + "%"
+        : "—";
+
+
+    document.getElementById("lengthStat")
+      .textContent =
+      state.lengthMode === "custom"
+        ? state.customMin +
+          "–" +
+          state.customMax
+        : state.lengthMode +
+          " chars";
+
+
+    document.getElementById("resultCount")
+      .textContent =
+      filtered.length +
+      " ta username";
+
+
+    if (!filtered.length) {
+
+      container.innerHTML = `
+
+        <div class="empty">
+
+          <div class="empty-icon">
+            <i data-lucide="sparkles" width="27"></i>
+          </div>
+
+          <h3>
+            Username'lar hali yaratilmagan
+          </h3>
+
+          <p>
+            Chap tarafdagi parametrlarni tanlang
+            va Generate usernames tugmasini bosing.
+          </p>
+
+        </div>
+
+      `;
+
+      lucide.createIcons();
+
+      return;
+
+    }
+
+
+    container.innerHTML =
+      '<div class="results">' +
+      filtered.map(item => `
+
+        <div class="result">
+
+          <div class="result-main">
 
             <div>
-              <h1 className="text-lg font-bold tracking-tight">
-                IG Name Finder
-              </h1>
 
-              <p className="text-xs text-zinc-500">
-                Username Generator & Pattern Finder
-              </p>
-            </div>
-          </div>
+              <div class="username">
 
-          <div className="flex items-center gap-2 self-start rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-400 sm:self-auto">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-            </span>
-            Engine: Pattern Predictor
-            <span className="font-semibold">Active</span>
-          </div>
-        </header>
+                @${escapeHTML(item.username)}
 
-        {/* Intro */}
-        <section className="mb-6">
-          <div className="max-w-3xl">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-violet-400">
-              <Zap size={14} />
-              Client-side engine
-            </div>
+                <span class="chars">
+                  ${item.chars} chars
+                </span>
 
-            <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
-              Find unusual names before
-              <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
-                {" "}
-                everyone else.
-              </span>
-            </h2>
-
-            <p className="mt-3 text-sm leading-6 text-zinc-400">
-              Instagram serveriga avtomatik ulanmaydi. Algoritm noodatiy
-              patternlarni yaratadi va ularning noyoblik skorini hisoblaydi.
-            </p>
-          </div>
-        </section>
-
-        {/* Stats */}
-        <section className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard
-            icon={<Layers3 size={18} />}
-            label="Generatsiya qilingan"
-            value={results.length.toString()}
-          />
-
-          <StatCard
-            icon={<Gauge size={18} />}
-            label="O‘rtacha noyoblik"
-            value={results.length ? `${averageScore}%` : "—"}
-          />
-
-          <StatCard
-            icon={<Hash size={18} />}
-            label="Tanlangan uzunlik"
-            value={selectedLengthLabel}
-          />
-        </section>
-
-        <div className="grid gap-6 lg:grid-cols-[350px_1fr]">
-          {/* Settings */}
-          <aside className="h-fit rounded-2xl border border-white/10 bg-white/[0.035] p-5 backdrop-blur-xl">
-            <div className="mb-5 flex items-center gap-2">
-              <Settings2 size={18} className="text-violet-400" />
-              <h3 className="font-bold">Generation Settings</h3>
-            </div>
-
-            {/* Length */}
-            <div className="mb-6">
-              <label className="mb-3 block text-sm font-semibold">
-                Uzunlik
-              </label>
-
-              <div className="grid grid-cols-4 gap-2">
-                {(["4", "5", "6", "7"] as LengthMode[]).map((value) => (
-                  <button
-                    key={value}
-                    onClick={() => setLengthMode(value)}
-                    className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
-                      lengthMode === value
-                        ? "border-violet-500/60 bg-violet-500/15 text-violet-300"
-                        : "border-white/10 bg-white/[0.025] text-zinc-400 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    {value}
-                  </button>
-                ))}
               </div>
+
+              <div class="badges">
+
+                <span class="badge score">
+                  Noyoblik: ${item.score}%
+                </span>
+
+                <span class="badge style-badge">
+                  ${styleLabel(item.style)}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="result-actions">
 
               <button
-                onClick={() => setLengthMode("custom")}
-                className={`mt-2 flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${
-                  lengthMode === "custom"
-                    ? "border-violet-500/60 bg-violet-500/15 text-violet-300"
-                    : "border-white/10 bg-white/[0.025] text-zinc-400 hover:bg-white/[0.06]"
-                }`}
+                class="action"
+                data-copy="${escapeAttr(item.username)}"
               >
-                <span>Maxsus uzunlik</span>
-                <ChevronDown size={15} />
+                <i data-lucide="clipboard" width="14"></i>
+                Nusxalash
               </button>
 
-              {lengthMode === "custom" && (
-                <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-                  <div className="mb-3 flex justify-between text-xs text-zinc-500">
-                    <span>Min: {customMin}</span>
-                    <span>Max: {customMax}</span>
-                  </div>
+              <button
+                class="action instagram"
+                data-instagram="${escapeAttr(item.username)}"
+              >
+                <i data-lucide="external-link" width="14"></i>
+                Instagramda tekshirish
+              </button>
 
-                  <input
-                    type="range"
-                    min={1}
-                    max={30}
-                    value={customMin}
-                    onChange={(e) =>
-                      setCustomMin(
-                        Math.min(Number(e.target.value), customMax)
-                      )
-                    }
-                    className="w-full accent-violet-500"
-                  />
-
-                  <input
-                    type="range"
-                    min={1}
-                    max={30}
-                    value={customMax}
-                    onChange={(e) =>
-                      setCustomMax(
-                        Math.max(Number(e.target.value), customMin)
-                      )
-                    }
-                    className="mt-2 w-full accent-fuchsia-500"
-                  />
-                </div>
-              )}
             </div>
 
-            {/* Character rules */}
-            <div className="mb-6">
-              <label className="mb-3 block text-sm font-semibold">
-                Belgilar
-              </label>
+          </div>
 
-              <div className="space-y-2">
-                <Toggle
-                  checked={allowUnderscore}
-                  onChange={setAllowUnderscore}
-                  label="Pastki chiziqcha (_) ruxsat"
-                />
 
-                <Toggle
-                  checked={allowDot}
-                  onChange={setAllowDot}
-                  label="Nuqta (.) ruxsat"
-                />
+          <div class="progress">
 
-                <Toggle
-                  checked={allowNumbers}
-                  onChange={setAllowNumbers}
-                  label="Raqamlar (0-9) ruxsat"
-                />
-              </div>
+            <div
+              style="width:${item.score}%"
+            ></div>
 
-              <p className="mt-3 text-[11px] leading-5 text-zinc-600">
-                Nuqta/chiziqcha boshida yoki oxirida va ketma-ket ishlatilmaydi.
-              </p>
-            </div>
+          </div>
 
-            {/* Style */}
-            <div className="mb-6">
-              <label className="mb-3 block text-sm font-semibold">
-                Generation Style
-              </label>
-
-              <div className="space-y-2">
-                <StyleButton
-                  active={style === "rare"}
-                  onClick={() => setStyle("rare")}
-                  title="High Probability / Rare"
-                  description="Noodatiy harf patternlari"
-                  icon={<Star size={15} />}
-                />
-
-                <StyleButton
-                  active={style === "aesthetic"}
-                  onClick={() => setStyle("aesthetic")}
-                  title="Aesthetic / Minimal"
-                  description="O‘qilishi oson va chiroyli"
-                  icon={<Sparkles size={15} />}
-                />
-
-                <StyleButton
-                  active={style === "brand"}
-                  onClick={() => setStyle("brand")}
-                  title="Brand / Tech"
-                  description="Startap va texnologik"
-                  icon={<Activity size={15} />}
-                />
-
-                <StyleButton
-                  active={style === "random"}
-                  onClick={() => setStyle("random")}
-                  title="Randomized"
-                  description="To‘liq tasodifiy"
-                  icon={<BarChart3 size={15} />}
-                />
-              </div>
-            </div>
-
-            {/* Base word */}
-            <div className="mb-5">
-              <label className="mb-2 block text-sm font-semibold">
-                Base word
-                <span className="ml-2 text-xs font-normal text-zinc-600">
-                  ixtiyoriy
-                </span>
-              </label>
-
-              <input
-                value={baseWord}
-                onChange={(e) => setBaseWord(e.target.value)}
-                placeholder="masalan: amin"
-                maxLength={30}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-sm outline-none transition placeholder:text-zinc-700 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/10"
-              />
-            </div>
-
-            {/* Amount */}
-            <div className="mb-5">
-              <label className="mb-2 block text-sm font-semibold">
-                Miqdor
-              </label>
-
-              <div className="grid grid-cols-3 gap-2">
-                {[20, 30, 50].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setAmount(num)}
-                    className={`rounded-xl border py-2.5 text-sm font-semibold transition ${
-                      amount === num
-                        ? "border-violet-500/60 bg-violet-500/15 text-violet-300"
-                        : "border-white/10 bg-white/[0.025] text-zinc-400 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={generate}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 py-3.5 text-sm font-bold shadow-lg shadow-violet-950/30 transition hover:scale-[1.01] hover:from-violet-500 hover:to-fuchsia-500 active:scale-[0.99]"
-            >
-              <Sparkles
-                size={17}
-                className="transition group-hover:rotate-12"
-              />
-              Generate usernames
-            </button>
-          </aside>
-
-          {/* Results */}
-          <section className="min-w-0">
-            {/* Toolbar */}
-            <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.035] p-3 backdrop-blur-xl">
-              <div className="flex flex-col gap-3 md:flex-row">
-                <div className="relative flex-1">
-                  <Search
-                    size={17}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
-                  />
-
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Username qidirish..."
-                    className="w-full rounded-xl border border-white/10 bg-black/20 py-3 pl-10 pr-4 text-sm outline-none placeholder:text-zinc-700 focus:border-violet-500/50"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 sm:flex">
-                  <button
-                    onClick={copyAll}
-                    disabled={!results.length}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-xs font-semibold text-zinc-300 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    {copied === "__all__" ? (
-                      <Check size={15} />
-                    ) : (
-                      <Copy size={15} />
-                    )}
-                    <span className="hidden sm:inline">Copy All</span>
-                  </button>
-
-                  <button
-                    onClick={exportTXT}
-                    disabled={!results.length}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-xs font-semibold text-zinc-300 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    <Download size={15} />
-                    <span className="hidden sm:inline">Export TXT</span>
-                  </button>
-
-                  <button
-                    onClick={clearResults}
-                    disabled={!results.length}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-red-500/10 bg-red-500/5 px-3 py-3 text-xs font-semibold text-red-400 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    <Trash2 size={15} />
-                    <span className="hidden sm:inline">Tozalash</span>
-                  </button>
-                </div>
-              </div>
-
-              {generatedAt && (
-                <div className="mt-2 text-[11px] text-zinc-600">
-                  Oxirgi generatsiya: {generatedAt}
-                </div>
-              )}
-            </div>
-
-            {/* Notice */}
-            <div className="mb-4 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3 text-xs leading-5 text-amber-200/60">
-              <span className="font-semibold text-amber-300">
-                Eslatma:
-              </span>{" "}
-              Noyoblik skori Instagram'dagi real mavjudlikni tasdiqlamaydi.
-              Username'ni olishdan oldin Instagram'da qo‘lda tekshiring.
-            </div>
-
-            {/* Empty */}
-            {!filteredResults.length ? (
-              <div className="flex min-h-[430px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-500/10">
-                  <Sparkles size={28} className="text-violet-400" />
-                </div>
-
-                <h3 className="font-bold">
-                  Username'lar hali yaratilmagan
-                </h3>
-
-                <p className="mt-2 max-w-sm text-sm leading-6 text-zinc-600">
-                  Chap tarafdagi parametrlarni tanlang va Generate usernames
-                  tugmasini bosing.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredResults.map((item) => (
-                  <div
-                    key={`${item.username}-${item.style}`}
-                    className="group rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-xl transition hover:border-violet-500/20 hover:bg-white/[0.05]"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-lg font-bold tracking-tight">
-                            @{item.username}
-                          </span>
-
-                          <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-zinc-500">
-                            {item.chars} chars
-                          </span>
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-emerald-500/15 bg-emerald-500/5 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
-                            Noyoblik: {item.score}%
-                          </span>
-
-                          <span className="rounded-full border border-violet-500/10 bg-violet-500/5 px-2.5 py-1 text-[11px] text-violet-300">
-                            {styleLabel(item.style)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 sm:flex">
-                        <button
-                          onClick={() => copyUsername(item.username)}
-                          className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2.5 text-xs font-semibold text-zinc-300 transition hover:bg-white/[0.08]"
-                        >
-                          {copied === item.username ? (
-                            <>
-                              <Check size={15} />
-                              Nusxalandi
-                            </>
-                          ) : (
-                            <>
-                              <Clipboard size={15} />
-                              Nusxalash
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          onClick={() => openInstagram(item.username)}
-                          className="flex items-center justify-center gap-2 rounded-xl bg-violet-600/90 px-3 py-2.5 text-xs font-semibold transition hover:bg-violet-500"
-                        >
-                          <ExternalLink size={15} />
-                          Instagramda tekshirish
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Score bar */}
-                    <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/5">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-emerald-400 transition-all"
-                        style={{ width: `${item.score}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Bottom */}
-            {results.length > 0 && (
-              <div className="mt-5 flex flex-col items-center justify-between gap-2 text-xs text-zinc-600 sm:flex-row">
-                <span>
-                  {filteredResults.length} ta username ko‘rsatilmoqda
-                </span>
-
-                <button
-                  onClick={clearResults}
-                  className="flex items-center gap-1.5 transition hover:text-red-400"
-                >
-                  <Eraser size={13} />
-                  Barcha natijalarni tozalash
-                </button>
-              </div>
-            )}
-          </section>
         </div>
 
-        {/* Footer */}
-        <footer className="mt-8 border-t border-white/5 pt-5 text-center text-[11px] leading-5 text-zinc-700">
-          IG Name Finder • Pattern Predictor Engine • Client-side only
-          <br />
-          Pattern score real Instagram availability guarantee emas.
-        </footer>
-      </div>
-    </main>
-  );
-}
+      `).join("") +
+      "</div>";
 
-/* =========================
-   COMPONENTS
-========================= */
 
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur-xl">
-      <div className="mb-3 flex items-center gap-2 text-zinc-500">
-        <div className="rounded-lg border border-white/10 bg-white/5 p-2">
-          {icon}
-        </div>
+    /* COPY EVENTS */
 
-        <span className="text-xs font-medium">{label}</span>
-      </div>
+    container
+      .querySelectorAll("[data-copy]")
+      .forEach(button => {
 
-      <div className="text-2xl font-black tracking-tight">{value}</div>
-    </div>
-  );
-}
+        button.addEventListener(
+          "click",
+          () => {
 
-function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3 text-left transition hover:bg-white/[0.05]"
-    >
-      <span className="text-xs text-zinc-400">{label}</span>
+            copyUsername(
+              button.dataset.copy,
+              button
+            );
 
-      <span
-        className={`relative h-5 w-9 rounded-full transition ${
-          checked ? "bg-violet-600" : "bg-zinc-800"
-        }`}
-      >
-        <span
-          className={`absolute top-1 h-3 w-3 rounded-full bg-white transition ${
-            checked ? "left-5" : "left-1"
-          }`}
-        />
-      </span>
-    </button>
-  );
-}
+          }
+        );
 
-function StyleButton({
-  active,
-  onClick,
-  title,
-  description,
-  icon,
-}: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
-        active
-          ? "border-violet-500/40 bg-violet-500/10"
-          : "border-white/5 bg-white/[0.02] hover:bg-white/[0.05]"
-      }`}
-    >
-      <div
-        className={`rounded-lg p-2 ${
-          active
-            ? "bg-violet-500/15 text-violet-300"
-            : "bg-white/5 text-zinc-600"
-        }`}
-      >
-        {icon}
-      </div>
+      });
 
-      <div className="min-w-0">
-        <div
-          className={`text-xs font-semibold ${
-            active ? "text-violet-300" : "text-zinc-400"
-          }`}
-        >
-          {title}
-        </div>
 
-        <div className="mt-0.5 text-[10px] text-zinc-600">
-          {description}
-        </div>
-      </div>
-    </button>
-  );
-}
+    /* INSTAGRAM EVENTS */
 
-function styleLabel(style: StyleMode) {
-  switch (style) {
-    case "rare":
-      return "Rare";
-    case "aesthetic":
-      return "Aesthetic";
-    case "brand":
-      return "Brand";
-    case "random":
-      return "Random";
+    container
+      .querySelectorAll("[data-instagram]")
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            openInstagram(
+              button.dataset.instagram
+            );
+
+          }
+        );
+
+      });
+
+
+    lucide.createIcons();
+
   }
-}
+
+
+  /* ============================
+     SECURITY
+  ============================ */
+
+  function escapeHTML(value) {
+
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  function escapeAttr(value) {
+
+    return value
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  /* ============================
+     LENGTH BUTTONS
+  ============================ */
+
+  document
+    .querySelectorAll("[data-length]")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll("[data-length]")
+            .forEach(btn =>
+              btn.classList.remove("active")
+            );
+
+          button.classList.add("active");
+
+          state.lengthMode =
+            Number(button.dataset.length);
+
+          render();
+
+        }
+      );
+
+    });
+
+
+  /* CUSTOM LENGTH */
+
+  document
+    .getElementById("customToggle")
+    .addEventListener(
+      "click",
+      () => {
+
+        document
+          .getElementById("customBox")
+          .classList.toggle("show");
+
+        state.lengthMode =
+          "custom";
+
+        document
+          .querySelectorAll("[data-length]")
+          .forEach(btn =>
+            btn.classList.remove("active")
+          );
+
+        render();
+
+      }
+    );
+
+
+  document
+    .getElementById("minRange")
+    .addEventListener(
+      "input",
+      event => {
+
+        state.customMin =
+          Math.min(
+            Number(event.target.value),
+            state.customMax
+          );
+
+        document.getElementById("minValue")
+          .textContent =
+          state.customMin;
+
+        render();
+
+      }
+    );
+
+
+  document
+    .getElementById("maxRange")
+    .addEventListener(
+      "input",
+      event => {
+
+        state.customMax =
+          Math.max(
+            Number(event.target.value),
+            state.customMin
+          );
+
+        document.getElementById("maxValue")
+          .textContent =
+          state.customMax;
+
+        render();
+
+      }
+    );
+
+
+  /* ============================
+     TOGGLES
+  ============================ */
+
+  document
+    .querySelectorAll("[data-toggle]")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const key =
+            button.dataset.toggle;
+
+          state[key] =
+            !state[key];
+
+          button.classList.toggle(
+            "on",
+            state[key]
+          );
+
+        }
+      );
+
+    });
+
+
+  /* ============================
+     STYLE BUTTONS
+  ============================ */
+
+  document
+    .querySelectorAll("[data-style]")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll("[data-style]")
+            .forEach(btn =>
+              btn.classList.remove("active")
+            );
+
+          button.classList.add("active");
+
+          state.style =
+            button.dataset.style;
+
+        }
+      );
+
+    });
+
+
+  /* ============================
+     AMOUNT
+  ============================ */
+
+  document
+    .querySelectorAll("[data-amount]")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll("[data-amount]")
+            .forEach(btn =>
+              btn.classList.remove("active")
+            );
+
+          button.classList.add("active");
+
+          state.amount =
+            Number(button.dataset.amount);
+
+        }
+      );
+
+    });
+
+
+  /* ============================
+     BASE WORD
+  ============================ */
+
+  document
+    .getElementById("baseWord")
+    .addEventListener(
+      "input",
+      event => {
+
+        state.baseWord =
+          event.target.value;
+
+      }
+    );
+
+
+  /* ============================
+     SEARCH
+  ============================ */
+
+  document
+    .getElementById("searchInput")
+    .addEventListener(
+      "input",
+      render
+    );
+
+
+  /* ============================
+     BUTTONS
+  ============================ */
+
+  document
+    .getElementById("generateBtn")
+    .addEventListener(
+      "click",
+      generate
+    );
+
+
+  document
+    .getElementById("copyAllBtn")
+    .addEventListener(
+      "click",
+      copyAll
+    );
+
+
+  document
+    .getElementById("exportBtn")
+    .addEventListener(
+      "click",
+      exportTXT
+    );
+
+
+  document
+    .getElementById("clearBtn")
+    .addEventListener(
+      "click",
+      clearResults
+    );
+
+
+  document
+    .getElementById("clearBottom")
+    .addEventListener(
+      "click",
+      clearResults
+    );
+
+
+  /* ============================
+     START
+  ============================ */
+
+  load();
+
+  lucide.createIcons();
+
+  render();
+
+</script>
+
+</body>
+</html>
